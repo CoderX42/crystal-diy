@@ -1,0 +1,21 @@
+{
+  "name": "crystal-diy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "一念一串 monorepo",
+  "scripts": {
+    "dev:deps": "docker compose up -d mongodb redis",
+    "dev:admin": "pnpm --dir apps/admin -F @vben/web-ele run dev",
+    "dev:backend": "pnpm --filter @crystal-diy/backend start:dev",
+    "build:backend": "pnpm --filter @crystal-diy/backend build",
+    "build:admin": "pnpm --dir apps/admin -F @vben/web-ele run build",
+    "lint:backend": "pnpm --filter @crystal-diy/backend lint",
+    "test:backend": "pnpm --filter @crystal-diy/backend test",
+    "typecheck:admin": "pnpm --dir apps/admin -F @vben/web-ele run typecheck"
+  },
+  "packageManager": "pnpm@11.6.0",
+  "engines": {
+    "node": ">=22.18.0",
+    "pnpm": ">=10.0.0"
+  }
+}

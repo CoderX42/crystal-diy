@@ -1,0 +1,98 @@
+# 一念一串后台管理系统
+
+基于 NestJS + MongoDB + Redis + Vben Admin 的「一念一串」小程序后台管理系统，覆盖商品素材、主题推荐、DIY 报价、购物车、订单支付、售后评价、手串册、念卡、9:16 海报、内容审核和数据看板。
+
+## 技术栈
+
+- 后端：NestJS、Mongoose、Redis/ioredis、BullMQ、JWT、Swagger
+- 后台：Vben Admin、Vue、Element Plus
+- 数据：MongoDB、Redis
+- 支付：微信支付 V3 接口结构，默认支持 mock 模式
+
+## 本地启动
+
+### 1. 安装依赖
+
+```bash
+pnpm install
+```
+
+### 2. 准备环境变量
+
+```bash
+cp .env.example .env
+```
+
+默认配置会连接本地 Docker Compose 暴露的 MongoDB 与 Redis：
+
+```env
+MONGODB_URI=mongodb://localhost:27017/crystal_diy
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+### 3. 启动 MongoDB 与 Redis
+
+```bash
+docker compose up -d mongodb redis
+```
+
+检查依赖状态：
+
+```bash
+docker compose ps
+```
+
+### 4. 启动后端
+
+```bash
+pnpm dev:backend
+```
+
+后端默认地址：
+
+- API：`http://localhost:3000/api`
+- Swagger：`http://localhost:3000/api/docs`
+- 健康检查：`http://localhost:3000/api/health`
+- 上传文件访问：`http://localhost:3000/uploads/...`
+
+### 5. 启动 Vben Admin
+
+```bash
+pnpm --dir apps/admin -F @vben/web-ele run dev
+```
+
+默认管理员账号来自 `.env`：
+
+- 用户名：`admin`
+- 密码：`Admin@123456`
+
+## 常用命令
+
+```bash
+pnpm test:backend
+pnpm build:backend
+pnpm --dir apps/admin -F @vben/web-ele run typecheck
+pnpm --dir apps/admin -F @vben/web-ele run build
+```
+
+## 业务模块
+
+- Phase 1：NestJS、Vben Admin、环境配置、MongoDB、Redis、登录、RBAC、文件上传
+- Phase 2：商品素材、SKU、库存、主题推荐规则后台
+- Phase 3：DIY 设计草稿、服务端报价、可制作性校验、购物车
+- Phase 4：订单、微信支付、退款、物流、售后、评价
+- Phase 5：手串册、念卡生成、模板管理、9:16 海报、内容审核、数据看板
+
+## 微信支付说明
+
+开发环境默认 `WECHAT_PAY_MOCK=true`，可通过后台“标记支付”或小程序支付回调模拟订单支付成功。接入真实微信支付时，需要配置：
+
+```env
+WECHAT_PAY_MCH_ID=
+WECHAT_PAY_SERIAL_NO=
+WECHAT_PAY_PRIVATE_KEY_PATH=
+WECHAT_PAY_API_V3_KEY=
+WECHAT_PAY_PLATFORM_PUBLIC_KEY_PATH=
+WECHAT_PAY_MOCK=false
+```

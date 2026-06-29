@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+coverage/
+
+# env files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.tmp_*
+_tmp_*
+
+# test probes (sandbox-only, never committed)
+_*.cjs
+_*.js
+_test-*
