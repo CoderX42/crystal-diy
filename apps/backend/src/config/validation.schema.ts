@@ -1,0 +1,27 @@
+import * as Joi from 'joi';
+
+export const validationSchema = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
+  PORT: Joi.number().default(3000),
+  API_PREFIX: Joi.string().default('api'),
+  MONGODB_URI: Joi.string().required(),
+  REDIS_HOST: Joi.string().default('localhost'),
+  REDIS_PORT: Joi.number().default(6379),
+  REDIS_PASSWORD: Joi.string().allow('', null),
+  JWT_ACCESS_SECRET: Joi.string().required(),
+  JWT_ACCESS_EXPIRES_IN: Joi.string().default('2h'),
+  JWT_REFRESH_SECRET: Joi.string().required(),
+  JWT_REFRESH_EXPIRES_IN: Joi.string().default('30d'),
+  ADMIN_DEFAULT_USERNAME: Joi.string().default('admin'),
+  ADMIN_DEFAULT_PASSWORD: Joi.string().default('Admin@123456'),
+  UPLOAD_LOCAL_DIR: Joi.string().default('uploads'),
+  PUBLIC_BASE_URL: Joi.string().default('http://localhost:3000'),
+  WECHAT_APP_ID: Joi.string().allow('', null),
+  WECHAT_APP_SECRET: Joi.string().allow('', null),
+  WECHAT_PAY_MCH_ID: Joi.string().allow('', null),
+  WECHAT_PAY_SERIAL_NO: Joi.string().allow('', null),
+  WECHAT_PAY_PRIVATE_KEY_PATH: Joi.string().allow('', null),
+  WECHAT_PAY_API_V3_KEY: Joi.string().allow('', null),
+  WECHAT_PAY_MOCK: Joi.string().default('true'),
+  WECHAT_PAY_PLATFORM_PUBLIC_KEY_PATH: Joi.string().allow('', null),
+});
