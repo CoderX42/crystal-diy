@@ -72,6 +72,7 @@ pnpm --dir apps/admin -F @vben/web-ele run dev
 ```bash
 pnpm test:backend
 pnpm build:backend
+pnpm check:admin-api
 pnpm --dir apps/admin -F @vben/web-ele run typecheck
 pnpm --dir apps/admin -F @vben/web-ele run build
 ```
@@ -79,6 +80,12 @@ pnpm --dir apps/admin -F @vben/web-ele run build
 ## 前后端联调 Smoke
 
 后端启动后可执行一期主链路接口联调，脚本会通过真实 HTTP 请求覆盖：管理员登录、小程序登录、商品/SKU、主题匹配、DIY 报价、购物车、地址、下单、微信支付 mock 回调、发货、确认收货、手串册、念卡生成/重写、9:16 海报和数据看板。
+
+同时可执行后台接口契约检查，确保 Vben Admin 的 `crystalApi` 中声明的后台接口在 NestJS 控制器中存在，并提示未封装的后台路由：
+
+```bash
+pnpm check:admin-api
+```
 
 ```bash
 pnpm dev:deps
