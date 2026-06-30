@@ -7,6 +7,7 @@ dist/
 coverage/
 uploads/
 apps/backend/uploads/
+*.tsbuildinfo
 
 # env files
 .env

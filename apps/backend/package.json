@@ -4,11 +4,11 @@
   "private": true,
   "description": "一念一串 NestJS API",
   "scripts": {
-    "build": "nest build",
+    "build": "rm -f tsconfig.build.tsbuildinfo && tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "ts-node -r tsconfig-paths/register src/main.ts",
-    "start:prod": "ts-node -r tsconfig-paths/register src/main.ts",
+    "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
