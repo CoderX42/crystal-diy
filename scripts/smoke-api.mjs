@@ -27,12 +27,103 @@ async function request(method, path, { token, body, expected = method === 'POST'
   return payload.data;
 }
 
+async function uploadFile(path, { token, filename, content, mimeType = 'text/plain', expected = [200, 201] }) {
+  const formData = new FormData();
+  formData.append('file', new Blob([content], { type: mimeType }), filename);
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: 'POST',
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const payload = await response.json().catch(() => null);
+  const expectedStatuses = Array.isArray(expected) ? expected : [expected];
+  if (!expectedStatuses.includes(response.status)) {
+    throw new Error(`POST ${path} expected ${expected}, got ${response.status}: ${JSON.stringify(payload)}`);
+  }
+  if (!payload || payload.code !== 0) {
+    throw new Error(`POST ${path} returned business error: ${JSON.stringify(payload)}`);
+  }
+  return payload.data;
+}
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
 function idOf(entity) {
   return entity?._id ?? entity?.id;
+}
+
+async function createCompletedOrder({ adminToken, appToken, productId, beadSku, cordSku, suffix }) {
+  const designItems = [
+    { instanceId: `bead-${suffix}`, skuId: idOf(beadSku), productId, category: 'bead', quantity: 1, position: 0 },
+    { instanceId: `cord-${suffix}`, skuId: idOf(cordSku), productId, category: 'cord', quantity: 1, position: 1 },
+  ];
+  const quote = await request('POST', '/app/designs/quote', {
+    token: appToken,
+    body: { themeType: 'wuxing', items: designItems },
+  });
+  assert(quote.makeable === true, `design quote is not makeable: ${JSON.stringify(quote)}`);
+  assert(quote.totalAmount === 100, `unexpected quote total ${quote.totalAmount}`);
+
+  const cart = await request('POST', '/app/carts/designs', {
+    token: appToken,
+    body: { designId: quote.designId },
+  });
+  const cartId = idOf(cart);
+  assert(cartId && cart.items?.length === 1, 'cart did not include design');
+
+  const address = await request('POST', '/app/users/me/addresses', {
+    token: appToken,
+    body: {
+      receiver: '联调用户',
+      phone: '13800000000',
+      province: '浙江省',
+      city: '杭州市',
+      district: '西湖区',
+      detail: `联调路 ${suffix}`,
+      isDefault: true,
+    },
+  });
+  const addressId = idOf(address);
+  assert(addressId, 'address id missing');
+
+  const order = await request('POST', '/app/orders/from-cart', {
+    token: appToken,
+    body: { cartId, addressId },
+  });
+  assert(order.totalAmount === 100, `unexpected order total ${order.totalAmount}`);
+  assert(order.status === 'pending_payment', `unexpected order status ${order.status}`);
+  assert(order.inventoryStatus === 'locked', `unexpected inventory status ${order.inventoryStatus}`);
+
+  const prepay = await request('POST', '/app/payments/wechat/prepay', {
+    token: appToken,
+    body: { orderNo: order.orderNo },
+  });
+  assert(prepay.prepayPayload?.provider === 'wechat_pay_v3', 'prepay payload provider missing');
+  assert(prepay.prepayPayload?.requestBody?.amount?.total === 100, 'prepay amount mismatch');
+
+  const paid = await request('POST', '/app/payments/wechat/callback', {
+    body: { orderNo: order.orderNo, transactionId: `WX-${suffix}`, amount: 100 },
+  });
+  assert(paid.order?.status === 'paid', `payment did not mark order paid: ${JSON.stringify(paid.order)}`);
+
+  const shipped = await request('POST', `/admin/orders/${order.orderNo}/ship`, {
+    token: adminToken,
+    body: {
+      carrier: 'SF',
+      trackingNo: `SF${suffix.replace(/\D/g, '').slice(0, 12)}`,
+      addressSnapshot: order.addressSnapshot,
+    },
+  });
+  assert(shipped.status === 'shipped', `ship did not mark order shipped: ${shipped.status}`);
+
+  const completed = await request('POST', `/app/orders/${order.orderNo}/confirm-received`, {
+    token: appToken,
+  });
+  assert(completed.status === 'completed', `confirm receipt did not complete order: ${completed.status}`);
+
+  return { orderNo: order.orderNo, quote, cart, address, order, completed };
 }
 
 async function main() {
@@ -101,75 +192,8 @@ async function main() {
   assert(picker.grouped?.bead?.some((item) => idOf(item) === idOf(beadSku)), 'picker missing bead sku');
   assert(picker.grouped?.cord?.some((item) => idOf(item) === idOf(cordSku)), 'picker missing cord sku');
 
-  const designItems = [
-    { instanceId: `bead-${runId}`, skuId: idOf(beadSku), productId, category: 'bead', quantity: 1, position: 0 },
-    { instanceId: `cord-${runId}`, skuId: idOf(cordSku), productId, category: 'cord', quantity: 1, position: 1 },
-  ];
-  const quote = await request('POST', '/app/designs/quote', {
-    token: appToken,
-    body: { themeType: 'wuxing', items: designItems },
-  });
-  assert(quote.makeable === true, `design quote is not makeable: ${JSON.stringify(quote)}`);
-  assert(quote.totalAmount === 100, `unexpected quote total ${quote.totalAmount}`);
-  state.designId = quote.designId;
-
-  const cart = await request('POST', '/app/carts/designs', {
-    token: appToken,
-    body: { designId: state.designId },
-  });
-  state.cartId = idOf(cart);
-  assert(state.cartId && cart.items?.length === 1, 'cart did not include design');
-
-  const address = await request('POST', '/app/users/me/addresses', {
-    token: appToken,
-    body: {
-      receiver: '联调用户',
-      phone: '13800000000',
-      province: '浙江省',
-      city: '杭州市',
-      district: '西湖区',
-      detail: '联调路 1 号',
-      isDefault: true,
-    },
-  });
-  state.addressId = idOf(address);
-  assert(state.addressId, 'address id missing');
-
-  const order = await request('POST', '/app/orders/from-cart', {
-    token: appToken,
-    body: { cartId: state.cartId, addressId: state.addressId },
-  });
-  state.orderNo = order.orderNo;
-  assert(order.totalAmount === 100, `unexpected order total ${order.totalAmount}`);
-  assert(order.status === 'pending_payment', `unexpected order status ${order.status}`);
-  assert(order.inventoryStatus === 'locked', `unexpected inventory status ${order.inventoryStatus}`);
-
-  const prepay = await request('POST', '/app/payments/wechat/prepay', {
-    token: appToken,
-    body: { orderNo: state.orderNo },
-  });
-  assert(prepay.prepayPayload?.provider === 'wechat_pay_v3', 'prepay payload provider missing');
-  assert(prepay.prepayPayload?.requestBody?.amount?.total === 100, 'prepay amount mismatch');
-
-  const paid = await request('POST', '/app/payments/wechat/callback', {
-    body: { orderNo: state.orderNo, transactionId: `WX-${runId}`, amount: 100 },
-  });
-  assert(paid.order?.status === 'paid', `payment did not mark order paid: ${JSON.stringify(paid.order)}`);
-
-  const shipped = await request('POST', `/admin/orders/${state.orderNo}/ship`, {
-    token: adminToken,
-    body: {
-      carrier: 'SF',
-      trackingNo: `SF${runId.replace(/\D/g, '').slice(0, 12)}`,
-      addressSnapshot: order.addressSnapshot,
-    },
-  });
-  assert(shipped.status === 'shipped', `ship did not mark order shipped: ${shipped.status}`);
-
-  const completed = await request('POST', `/app/orders/${state.orderNo}/confirm-received`, {
-    token: appToken,
-  });
-  assert(completed.status === 'completed', `confirm receipt did not complete order: ${completed.status}`);
+  const primaryOrder = await createCompletedOrder({ adminToken, appToken, productId, beadSku, cordSku, suffix: runId });
+  state.orderNo = primaryOrder.orderNo;
 
   const bracelet = await request('POST', '/app/bracelets', {
     token: appToken,
@@ -209,6 +233,66 @@ async function main() {
   const dashboard = await request('GET', '/admin/dashboard/overview', { token: adminToken });
   assert(typeof dashboard.pendingOrders === 'number', 'dashboard overview missing pendingOrders');
   assert(typeof dashboard.totalSales === 'number', 'dashboard overview missing totalSales');
+
+  const review = await request('POST', '/app/reviews', {
+    token: appToken,
+    body: { orderNo: state.orderNo, rating: 5, content: '联调评价：佩戴舒适' },
+  });
+  const reviewId = idOf(review);
+  assert(reviewId && review.status === 'pending', 'review was not created as pending');
+
+  const auditedReview = await request('PATCH', `/admin/reviews/${reviewId}/audit`, {
+    token: adminToken,
+    body: { status: 'approved' },
+  });
+  assert(auditedReview.status === 'approved', 'review audit did not approve review');
+
+  const refundOrder = await createCompletedOrder({ adminToken, appToken, productId, beadSku, cordSku, suffix: `${runId}-refund` });
+  const afterSale = await request('POST', '/app/after-sales', {
+    token: appToken,
+    body: { orderNo: refundOrder.orderNo, type: 'refund', reason: '联调退款售后' },
+  });
+  const afterSaleId = idOf(afterSale);
+  assert(afterSaleId && afterSale.status === 'pending', 'after-sale was not created as pending');
+
+  const approvedAfterSale = await request('PATCH', `/admin/after-sales/${afterSaleId}`, {
+    token: adminToken,
+    body: { status: 'approved', remark: '联调同意退款' },
+  });
+  assert(approvedAfterSale.status === 'approved', 'after-sale was not approved');
+  assert(approvedAfterSale.refundNo, 'approved after-sale did not create refundNo');
+
+  const completedRefund = await request('POST', '/admin/refunds/complete', {
+    token: adminToken,
+    body: { refundNo: approvedAfterSale.refundNo },
+  });
+  assert(completedRefund.refund?.status === 'completed', 'refund was not completed');
+  assert(completedRefund.order?.status === 'refunded', 'refunded order status mismatch');
+
+  const content = await request('POST', '/admin/content', {
+    token: adminToken,
+    body: { type: 'article', title: `联调内容-${runId}`, payload: { body: '联调内容正文' } },
+  });
+  const contentId = idOf(content);
+  assert(contentId && content.status === 'draft', 'content was not created as draft');
+
+  const publishedContent = await request('PATCH', `/admin/content/${contentId}/audit`, {
+    token: adminToken,
+    body: { status: 'published' },
+  });
+  assert(publishedContent.status === 'published', 'content was not published');
+
+  const appContent = await request('GET', '/app/content?type=article');
+  assert(appContent.items?.some((item) => idOf(item) === contentId), 'published content missing in app list');
+  const contentDetail = await request('GET', `/app/content/${contentId}`);
+  assert(contentDetail.title === publishedContent.title, 'app content detail mismatch');
+
+  const uploaded = await uploadFile('/admin/files/upload', {
+    token: adminToken,
+    filename: `smoke-${runId}.txt`,
+    content: `smoke upload ${runId}`,
+  });
+  assert(uploaded.url?.includes('/uploads/'), `uploaded file url invalid ${uploaded.url}`);
 
   console.log('Smoke API passed');
   console.log(JSON.stringify({ orderNo: state.orderNo, braceletId: state.braceletId, cardId: state.cardId }, null, 2));
