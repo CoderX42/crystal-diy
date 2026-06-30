@@ -76,6 +76,33 @@ pnpm --dir apps/admin -F @vben/web-ele run typecheck
 pnpm --dir apps/admin -F @vben/web-ele run build
 ```
 
+## 前后端联调 Smoke
+
+后端启动后可执行一期主链路接口联调，脚本会通过真实 HTTP 请求覆盖：管理员登录、小程序登录、商品/SKU、主题匹配、DIY 报价、购物车、地址、下单、微信支付 mock 回调、发货、确认收货、手串册、念卡生成/重写、9:16 海报和数据看板。
+
+```bash
+pnpm dev:deps
+pnpm dev:backend
+API_BASE_URL=http://localhost:3000/api pnpm smoke:api
+```
+
+当前后端本地启动脚本使用 `ts-node` 运行 `src/main.ts`，适合开发联调；生产部署前可按目标平台补充独立构建产物启动配置。
+
+联调脚本会写入一组带 `联调` 前缀的测试数据。若调整默认管理员账号，请同步设置：
+
+```bash
+ADMIN_DEFAULT_USERNAME=admin ADMIN_DEFAULT_PASSWORD=Admin@123456 pnpm smoke:api
+```
+
+每完成一个 Phase 并通过对应验证后，按要求提交并推送远程仓库：
+
+```bash
+git status
+git add .
+git commit -m "feat: complete phase <n>"
+git push origin main
+```
+
 ## 业务模块
 
 - Phase 1：NestJS、Vben Admin、环境配置、MongoDB、Redis、登录、RBAC、文件上传
