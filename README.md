@@ -75,6 +75,7 @@ pnpm build:backend
 pnpm check:admin-api
 pnpm --dir apps/admin -F @vben/web-ele run typecheck
 pnpm --dir apps/admin -F @vben/web-ele run build
+pnpm verify:phases
 ```
 
 ## 前后端联调 Smoke
@@ -85,6 +86,18 @@ pnpm --dir apps/admin -F @vben/web-ele run build
 
 ```bash
 pnpm check:admin-api
+```
+
+阶段统一验证入口会串行执行后端测试、后端构建、后台接口契约检查、前端类型检查，并确认后端生产构建产物存在：
+
+```bash
+pnpm verify:phases
+```
+
+如果后端已启动，可打开真实 HTTP smoke 联调覆盖 Phase 3/4/5 主业务链路：
+
+```bash
+RUN_SMOKE=1 API_BASE_URL=http://localhost:3000/api pnpm verify:phases
 ```
 
 ```bash
