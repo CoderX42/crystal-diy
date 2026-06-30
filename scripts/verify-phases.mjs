@@ -16,6 +16,7 @@ const phases = [
 const commands = [
   ['pnpm', ['test:backend']],
   ['pnpm', ['build:backend']],
+  ['pnpm', ['verify:prod']],
   ['pnpm', ['check:admin-api']],
   ['pnpm', ['typecheck:admin']],
 ];

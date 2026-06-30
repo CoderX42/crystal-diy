@@ -75,6 +75,7 @@ pnpm build:backend
 pnpm check:admin-api
 pnpm --dir apps/admin -F @vben/web-ele run typecheck
 pnpm --dir apps/admin -F @vben/web-ele run build
+pnpm verify:prod
 pnpm verify:phases
 ```
 
@@ -88,7 +89,14 @@ pnpm verify:phases
 pnpm check:admin-api
 ```
 
-阶段统一验证入口会串行执行后端测试、后端构建、后台接口契约检查、前端类型检查，并确认后端生产构建产物存在：
+生产启动验证会使用构建产物 `apps/backend/dist/main.js` 在临时端口启动后端，并检查 `/api/health`：
+
+```bash
+pnpm build:backend
+pnpm verify:prod
+```
+
+阶段统一验证入口会串行执行后端测试、后端构建、生产启动健康检查、后台接口契约检查、前端类型检查，并确认后端生产构建产物存在：
 
 ```bash
 pnpm verify:phases

@@ -14,7 +14,8 @@
     "smoke:api": "node scripts/smoke-api.mjs",
     "test:backend": "pnpm --filter @crystal-diy/backend test",
     "typecheck:admin": "pnpm --dir apps/admin -F @vben/web-ele run typecheck",
-    "verify:phases": "node scripts/verify-phases.mjs"
+    "verify:phases": "node scripts/verify-phases.mjs",
+    "verify:prod": "node scripts/verify-prod-start.mjs"
   },
   "packageManager": "pnpm@11.6.0",
   "engines": {
