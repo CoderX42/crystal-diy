@@ -83,6 +83,7 @@ const routes: RouteRecordRaw[] = [
         children: [
           { name: 'CrystalAdminUsers', path: '/crystal/system/admin-users', component: () => import('#/views/crystal/system/admin-users.vue'), meta: { title: '管理员' } },
           { name: 'CrystalRoles', path: '/crystal/system/roles', component: () => import('#/views/crystal/system/roles.vue'), meta: { title: '角色权限' } },
+          { name: 'CrystalFiles', path: '/crystal/system/files', component: () => import('#/views/crystal/system/files.vue'), meta: { title: '文件上传' } },
         ],
       },
     ],

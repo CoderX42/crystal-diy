@@ -22,6 +22,7 @@ const controllerPaths = [
   'apps/backend/src/modules/admin-users/admin-users.controller.ts',
   'apps/backend/src/modules/rbac/rbac.controller.ts',
   'apps/backend/src/modules/dashboard/dashboard.controller.ts',
+  'apps/backend/src/modules/file/file.controller.ts',
 ];
 
 const adminApiSource = readFileSync(adminApiPath, 'utf8');

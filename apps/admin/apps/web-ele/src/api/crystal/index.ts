@@ -77,4 +77,11 @@ export const crystalApi = {
   createContent: (data: Record<string, unknown>) => requestClient.post('/admin/content', data),
   updateContent: (id: string, data: Record<string, unknown>) => patchData(`/admin/content/${id}`, data),
   auditContent: (id: string, data: Record<string, unknown>) => patchData(`/admin/content/${id}/audit`, data),
+  uploadFile: (file: File) => {
+    const data = new FormData();
+    data.append('file', file);
+    return requestClient.post('/admin/files/upload', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
