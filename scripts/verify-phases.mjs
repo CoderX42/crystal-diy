@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 const runSmoke = process.env.RUN_SMOKE === '1' || process.env.RUN_SMOKE === 'true';
 const phases = [
-  { phase: 1, name: '基础设施与登录权限', evidence: ['pnpm test:backend', 'pnpm build:backend', 'pnpm typecheck:admin'] },
+  { phase: 1, name: '基础设施与登录权限', evidence: ['pnpm test:backend', 'pnpm build:backend', 'pnpm typecheck:admin', 'pnpm build:admin'] },
   { phase: 2, name: '素材 SKU 库存主题规则', evidence: ['pnpm test:backend', 'pnpm check:admin-api'] },
   { phase: 3, name: 'DIY 报价可制作购物车', evidence: ['pnpm test:backend', runSmoke ? 'pnpm smoke:api' : 'RUN_SMOKE=1 pnpm verify:phases'] },
   { phase: 4, name: '订单支付退款物流售后评价', evidence: ['pnpm test:backend', runSmoke ? 'pnpm smoke:api' : 'RUN_SMOKE=1 pnpm verify:phases'] },
@@ -19,6 +19,7 @@ const commands = [
   ['pnpm', ['verify:prod']],
   ['pnpm', ['check:admin-api']],
   ['pnpm', ['typecheck:admin']],
+  ['pnpm', ['build:admin']],
 ];
 
 if (runSmoke) commands.push(['pnpm', ['smoke:api']]);
