@@ -35,3 +35,6 @@ _tmp_*
 _*.cjs
 _*.js
 _test-*
+
+# asset bundle (intentionally untracked — managed outside the repo)
+asset/
