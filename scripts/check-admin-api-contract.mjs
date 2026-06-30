@@ -23,6 +23,7 @@ const controllerPaths = [
   'apps/backend/src/modules/rbac/rbac.controller.ts',
   'apps/backend/src/modules/dashboard/dashboard.controller.ts',
   'apps/backend/src/modules/file/file.controller.ts',
+  'apps/backend/src/modules/audit/audit.controller.ts',
 ];
 
 const adminApiSource = readFileSync(adminApiPath, 'utf8');
@@ -37,7 +38,6 @@ for (const relativePath of controllerPaths) {
 const intentionallyUnhandled = new Set([
   '/admin/auth/login',
   '/admin/auth/me',
-  '/admin/audit',
 ]);
 
 const missingBackend = [...frontendPaths].filter((path) => !routeExists(path, backendRoutes));

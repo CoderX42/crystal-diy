@@ -23,6 +23,8 @@ function patchData(url: string, data: Record<string, unknown>) {
 
 export const crystalApi = {
   dashboardOverview: () => requestClient.get<Record<string, number>>('/admin/dashboard/overview'),
+  auditLogs: (params?: PageParams) => getPage('/admin/audit', params),
+  createAuditLog: (data: Record<string, unknown>) => requestClient.post('/admin/audit', data),
 
   catalogItems: (params?: PageParams) => getPage('/admin/catalog', params),
   createCatalogItem: (data: Record<string, unknown>) => requestClient.post('/admin/catalog', data),

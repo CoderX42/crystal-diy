@@ -294,6 +294,15 @@ async function main() {
   });
   assert(uploaded.url?.includes('/uploads/'), `uploaded file url invalid ${uploaded.url}`);
 
+  const audit = await request('POST', '/admin/audit', {
+    token: adminToken,
+    body: { action: `smoke-audit-${runId}`, adminId: 'smoke-admin', detail: { orderNo: state.orderNo } },
+  });
+  const auditId = idOf(audit);
+  assert(auditId && audit.action === `smoke-audit-${runId}`, 'audit log was not created');
+  const auditLogs = await request('GET', '/admin/audit', { token: adminToken });
+  assert(auditLogs.items?.some((item) => idOf(item) === auditId), 'created audit log missing in admin list');
+
   console.log('Smoke API passed');
   console.log(JSON.stringify({ orderNo: state.orderNo, braceletId: state.braceletId, cardId: state.cardId }, null, 2));
 }
